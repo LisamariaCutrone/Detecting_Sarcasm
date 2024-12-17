@@ -139,7 +139,7 @@ embeddings_array.shape
 
 To get a visual representation of the relationship between the headlines, the RoBERTa embeddings can be plotted to see how headlines cluster based on their similarities in meaning. However, 768 dimensions are difficult to visualise. Therefore, the program uses UMAP, or Uniform Manifold Approximation and Projection to reduce the dimensionality of the embeddings from 768 to 3.
 
-## <font color="red">EXPLAIN BRIEFLY HOW UMAP WORKS:
+UMAP begins by creating a weighted graph in the high-dimensional space where each embedding is connected to its neighbors based on their similarity. To be to able to preserve local relationships when shifting from a 768-dimensional space to a 3-dimensional space, it focuses on maintaining the local and global structure of the data. This ensures that the points close in the original 768-dimensional space remain close in the 3-dimensional space.It aims to keep similar headlines close together and dissimilar headlines far apart even in the reduced 3-dimensional space. To optimize the layout, UMAP projects the data into a lower-dimensional space by minimizing the difference between the original high-dimensional relationships and their representation in the reduced space. This ensures that the essential patterns and connections within the data are preserved.
 """
 
 reducer = UMAP(n_neighbors=5, n_components=3, metric='cosine', min_dist=0.05, spread=0.5)
@@ -194,7 +194,7 @@ Therefore, the separation might be more evident in its' original dimensional spa
 Training and Testing Subsets
 ----------------------------------
 
-## <font color="red">Now lets split the dataset in train and test subsets (why is this necessary?)</font>
+It is necessary to split the dataset into training and testing subsets to prevent overfitting and to ensure the model’s ability to generalize to unseen data. The training set is used to train the machine learning model. This model learns patterns and relationships within the data. On the other hand, the testing subset is help back from the model during training. It’s used to evaluare how well the model generalizes to unseen data. Overfitting occurs when the model is trained on the entire dataset and then evaluated on the same data. It is likely to obtain an overly optimistic estimate of its performance.This happens because the model might memorize the training data instead of learning underlying patterns. Using a separate testing set provides a more realistic measure of how well the model is likely to perform on unseen data. If the model performs well on both the training and testing sets, it suggests that it has learned generalizable patterns rather than simply memorizing the training data. Generalization refers to the model’s ability to make accurate predictions on data it has not encountered during training. Splitting the dataset into training and testing sets helps ensure that the model is not just good at predicting the data it has already seen but also generalizes well to unseen data.
 """
 
 X_train, X_test, y_train, y_test = train_test_split(df.loc[:, df.columns != "is_sarcastic"], df["is_sarcastic"],
@@ -212,13 +212,12 @@ test_embeddings = get_embeddings(texts=X_test["headline"].tolist())
 #test_embeddings_df = pd.DataFrame(test_embeddings)
 test_embeddings_array = np.array([x.cpu() for x in test_embeddings])
 
-"""## <font color="red">We have the 768-dimensional embeddings of the train and test headlines. Time to train a classifier.</font>
-
-## <font color="black">The XGBoost algorithm</font>
+"""## <font color="black">The XGBoost algorithm</font>
 
 XGBoost, or eXtreme Gradient Boosting, is a powerful machine learning algorithm that excels in both classification and regression. It is widely used in competitive machine learning due to its speed and predictive performance. For tasks such as detecting sarcasm in headlines, XGBoost's XGBClassifier can be employed with the objective parameter set to binary:logistic for binary classification since the model decides whether the headline is sarcastic or not.
 
-More specifically, in this project, sarcasm detection is achieved by leveraging XGBoost with features extracted from text data using RoBERTa. The sarcasm detection prediction is made by first imputing <font color="red">! imputing means something else</font> the 768-dimensional vectors obtained from RoBERTa. The model starts with 768 features derived from the text. These vectors are put into the trained XGBoost model. Each decision tree processes the vector and outputs a score. This indicates the likelihood that the headline is sarcastic. It does so in such a way that it assigns a higher score to headlines that it believes are sarcastic and lower scores to those that are not. All the individual tree outputs are summed to produce a final score. It combines the values from the leaves to assign a score to each example, which represents the probability that the headline is sarcastic.
+More specifically, in this project, sarcasm detection is achieved by leveraging XGBoost with features extracted from text data using RoBERTa. The sarcasm detection prediction is made by first processing
+</font> the 768-dimensional vectors obtained from RoBERTa. The model starts with 768 features derived from the text. These vectors are put into the trained XGBoost model. Each decision tree processes the vector and outputs a score. This indicates the likelihood that the headline is sarcastic. It does so in such a way that it assigns a higher score to headlines that it believes are sarcastic and lower scores to those that are not. All the individual tree outputs are summed to produce a final score. It combines the values from the leaves to assign a score to each example, which represents the probability that the headline is sarcastic.
 
 To measure the effectiveness of the model and guide the training process, XGBoost uses an objective function, which consists of two parts: training loss and regularization. The training loss measures how well the model fits the data, while the regularization term penalizes overly complex models to prevent overfitting. In classification tasks, the training loss (L) is often defined using logistic loss, which quantifies the error between the predicted probability and the actual label:
 
@@ -272,7 +271,11 @@ The sigmoid (logistic) function maps any input into a probability value between 
 
 The probability obtained from the logistic function should result in a smaller residual than the previous prediction.
 
-This process is repeated until the maximum number of trees is reached. The size of the forest can be set using the parameter num_boost_round. <font color="red">Explain the hyperparameter grid search.</font>
+This process is repeated until the maximum number of trees is reached. The size of the forest can be set using the parameter num_boost_round.
+
+Hyperparameters are settings that control the learning process of a machine learning model. They are set before training.
+
+The grid search is a technique to find the best combination of hyperparameter values by systematically trying out different combinations and evaluating their performance. To define the hyperparameter grid a data structure called param_grid is used. To start off, the first hyperparameter used in this model is max_depth. This controls the maximum depth of each decision tree in the XGBoost model. Under this code, the second parameter is eta which is used to control the learning rate. This determines how much the model’s weights are adjusted during each iteration. Hyperparameter tuning is performed using GridSearchCV. The grid search will now systematically train and evaluate the model for every possible combination of hyperparameter values specified in the grid. It stores the results of each evaluation. This includes the hyperparameter values and the corresponding performance score. After the grid search is complete, the best_params_  attribute of the grid_search object stores the best hyperparameter values found. This process helps to find the optimal hyperparameter settings for the XGBoost model. This leads to improved performance on unseen data.</font>
 """
 
 def train_model(data: pd.DataFrame, labels: pd.Series):
@@ -360,5 +363,13 @@ Introduction to Boosted Trees — xgboost 2.1.1 documentation. https://xgboost.r
 Ghosh, Suvrodeep. « Leveraging Text Embeddings for Twitter Text Classification with XGBoost ». Medium, 1 avril 2024, https://medium.com/@suvro.dgp/leveraging-text-embeddings-for-twitter-text-classification-with-xgboost-6a4a1a89371c.
 
 Flair | Flair. https://flairnlp.github.io/. Consulté le 9 décembre 2024.
+
+DeLucia, S.-A. (2023, March 3). Unleashing the Power of BERT: How the Transformer Model Revolutionized NLP. Arize AI. https://arize.com/blog-course/unleashing-bert-transformer-model-nlp/. Consulted on December 1, 2024.
+
+Buhl, N. (2024, November 19). Training, Validation, Test Split for Machine Learning Datasets. Encord. https://encord.com/blog/train-val-test-split/. Consulted on December 2, 2024.
+
+XGBoost Contributors. (n.d.). Introduction to Boosted Trees. XGBoost Documentation. https://xgboost.readthedocs.io/en/stable/tutorials/model.html. Consulted on December 2, 2024.
+
+Kavlakoglu, E., & Russi, E. (2024, May 9). What is XGBoost? IBM. https://www.ibm.com/think/topics/xgboost. Consulted on November 30, 2024.
 """
 
